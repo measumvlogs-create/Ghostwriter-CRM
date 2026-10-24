@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>GhostWriter CRM</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f4f5fa;--card:#fff;--tx:#12162b;--mut:#6b7190;--bd:#e4e6f0;--nav:#0f1535;--p:#7c3aed;--b:#2563eb;--ok:#16a34a;--bad:#dc2626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0e20;--card:#151a36;--tx:#eef0ff;--mut:#9aa0c4;--bd:#262c52}}
+:root[data-theme="dark"]{--bg:#0b0e20;--card:#151a36;--tx:#eef0ff;--mut:#9aa0c4;--bd:#262c52}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:14px/1.5 Inter,system-ui,sans-serif;display:flex;min-height:100vh}
+aside{width:210px;background:var(--nav);color:#c9cdf0;padding:16px 10px;flex-shrink:0}
+aside h1{font-size:17px;color:#fff;margin:0 8px 16px}aside h1 span{color:#8b5cf6}
+aside a{display:block;padding:9px 12px;border-radius:10px;cursor:pointer;margin-bottom:2px}
+aside a.on,aside a:hover{background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff}
+main{flex:1;min-width:0;padding:16px 22px}
+.top{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.top input{flex:1;min-width:140px}
+input,select,textarea{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font:inherit;width:100%}
+button{background:linear-gradient(90deg,#7c3aed,#2563eb);color:#fff;border:0;border-radius:10px;padding:8px 14px;font:inherit;cursor:pointer}
+button.g{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:0 2px 8px rgba(20,20,60,.06)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.big{font-size:26px;font-weight:700}.mut{color:var(--mut);font-size:12px}
+.tag{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;background:#7c3aed22;color:var(--p)}
+.tag.ok{background:#16a34a22;color:var(--ok)}.tag.no{background:#dc262622;color:var(--bad)}
+.demo{background:#f59e0b22;color:#b45309;border-radius:8px;padding:6px 10px;font-size:12px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:8px;border-bottom:1px solid var(--bd)}
+.kan{display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:8px;overflow-x:auto}
+.kan .col{background:var(--bg);border-radius:12px;padding:8px;min-height:120px}
+.kan .d{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:8px;margin-top:6px;font-size:12px}
+.two{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.wrap{overflow-x:auto}
+@media(max-width:760px){body{flex-direction:column}aside{width:100%;display:flex;overflow-x:auto;gap:4px}aside h1{display:none}aside a{white-space:nowrap}.two{grid-template-columns:1fr}}
+</style></head><body>
+<aside id="nav"></aside>
+<main>
+<div class="top"><input placeholder="Search contacts, deals…" id="q"><select id="tsel" style="width:auto"></select><button onclick="go('capture')">+ Capture a Meeting</button></div>
+<div class="demo">Demo mode: AI extraction and connectors are simulated unless marked “Real”. Nothing is sent externally.</div>
+<div id="v"></div>
+</main>
+<script>
+const T={A:{name:"Acme Realty (Tenant A)",acct:"alice@acme-realty.com",contacts:[{n:"Sara Khan",c:"Acme Realty",e:"sara@acme-realty.com"}],deals:[{t:"Listings site",v:3500,s:"Qualified"}],tasks:[],conn:{},token:""},
+B:{name:"Bright Consulting (Tenant B)",acct:"bob@brightco.io",contacts:[{n:"Omar Ali",c:"Bright Consulting",e:"omar@brightco.io"}],deals:[{t:"Strategy retainer",v:8000,s:"Proposal Sent"}],tasks:[],conn:{},token:""}};
+const STAGES=["New Lead","Contacted","Qualified","Proposal Sent","Negotiation","Won","Lost"];
+const INTS=[["Google Calendar","Create meeting events and reminders","📅"],["Gmail","Draft, send and associate emails","✉️"],["Slack","Approved notifications and reminders","💬"],["Google Drive","Store proposals and meeting files","📁"],["HubSpot","Sync contacts and deals","🧩"]];
+const NAV=[["dashboard","Dashboard"],["capture","AI Meeting Capture"],["contacts","Contacts"],["pipeline","Deals Pipeline"],["tasks","Tasks & Follow-ups"],["email","AI Email Writer"],["integrations","Integrations"],["tenants","Two-Tenant Test"]];
+let cur="A",view="dashboard",draft=null;
+const t=()=>T[cur],esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function go(v){view=v;render()}
+function extract(txt){ // simulated rule-based extraction; real build calls an Edge Function with an LLM
+ const m=txt.match(/Met (\w+)(?: from ([\w &]+?))?(?: today|\.|,)/i),b=txt.match(/\$([\d,]+)/),d=txt.match(/by (\w+day)/i),f=txt.match(/follow-up call (next \w+)/i);
+ return{name:m?m[1]:null,company:m&&m[2]?m[2].trim():null,email:null,phone:null,value:b?+b[1].replace(/,/g,""):null,deadline:d?d[1]:null,followup:f?f[1]:null,summary:txt.slice(0,140),conf:m?0.86:0.3}}
+function save(tn,x){const s=T[tn];let ex=s.contacts.find(c=>x.name&&c.n.startsWith(x.name));
+ if(!ex)s.contacts.push({n:x.name||"Unknown",c:x.company||"—",e:x.email||"—"});
+ if(x.value)s.deals.push({t:(x.company||x.name)+" project",v:x.value,s:"New Lead"});
+ s.tasks.push({t:"Send proposal"+(x.deadline?" by "+x.deadline:""),done:false});
+ if(x.followup)s.tasks.push({t:"Follow-up call "+x.followup,done:false})}
+const SAMPLE="Met Ahmed from ABC Properties today. He needs a property management website for his agency. His budget is around $2,000. He wants a proposal by Friday. Schedule a follow-up call next Monday.";
+const views={
+dashboard(){const s=t(),pv=s.deals.reduce((a,d)=>a+d.v,0);return`<h2>${esc(s.name)}</h2><div class="grid">
+${[["Contacts",s.contacts.length],["Active deals",s.deals.length],["Pending follow-ups",s.tasks.filter(x=>!x.done).length],["Pipeline value","$"+pv.toLocaleString()]].map(a=>`<div class="card"><div class="mut">${a[0]}</div><div class="big">${a[1]}</div></div>`).join("")}</div>
+<div class="card" style="margin-top:12px"><b>Pipeline overview</b>${STAGES.map(st=>{const n=s.deals.filter(d=>d.s==st).length;return`<div style="display:flex;gap:8px;align-items:center;margin:6px 0"><span style="width:110px" class="mut">${st}</span><div style="height:10px;border-radius:6px;background:linear-gradient(90deg,#7c3aed,#2563eb);width:${n*60}px"></div>${n}</div>`}).join("")}</div>`},
+capture(){return`<h2>AI Meeting Capture</h2><div class="card"><div class="grid" style="margin-bottom:10px"><button class="g" onclick="alert('Voice: wire to SpeechRecognition / MediaRecorder + STT provider (not enabled in this demo).')">🎙 Record voice note</button><button class="g" onclick="alert('Upload: send audio to Supabase Storage, then STT (not enabled in this demo).')">⬆ Upload audio</button></div>
+<textarea id="note" rows="5">${SAMPLE}</textarea><p><button onclick="proc()">Process with AI</button></p><div id="rev">${draft?review():""}</div></div>`},
+contacts(){const s=t(),q=document.getElementById("q")?.value.toLowerCase()||"";return`<h2>Contacts</h2><div class="card wrap"><table><tr><th>Name</th><th>Company</th><th>Email</th></tr>${s.contacts.filter(c=>(c.n+c.c+c.e).toLowerCase().includes(q)).map(c=>`<tr><td>${esc(c.n)}</td><td>${esc(c.c)}</td><td>${esc(c.e)}</td></tr>`).join("")}</table></div>`},
+pipeline(){const s=t();return`<h2>Deals Pipeline</h2><div class="kan">${STAGES.map(st=>`<div class="col"><b>${st}</b><div class="mut">${s.deals.filter(d=>d.s==st).length} · $${s.deals.filter(d=>d.s==st).reduce((a,d)=>a+d.v,0).toLocaleString()}</div>${s.deals.map((d,i)=>d.s==st?`<div class="d"><b>${esc(d.t)}</b><br>$${d.v.toLocaleString()}<select onchange="t().deals[${i}].s=this.value;render()" aria-label="Change stage">${STAGES.map(x=>`<option ${x==d.s?"selected":""}>${x}</option>`).join("")}</select></div>`:"").join("")}</div>`).join("")}</div>`},
+tasks(){const s=t();return`<h2>Tasks & Follow-ups</h2><div class="card">${s.tasks.length?s.tasks.map((k,i)=>`<label style="display:block;margin:6px 0"><input type="checkbox" style="width:auto" ${k.done?"checked":""} onchange="t().tasks[${i}].done=this.checked;render()"> ${esc(k.t)}</label>`).join(""):'<span class="mut">No tasks yet. Capture a meeting.</span>'}</div>`},
+email(){const s=t(),c=s.contacts[s.contacts.length-1];return`<h2>AI Email Writer</h2><div class="card"><div class="mut">Draft for ${esc(c?.n)} (simulated generation, no send)</div><textarea rows="7">Hi ${esc(c?.n)},\n\nThanks for your time today. I’ll send the proposal we discussed and we can confirm next steps on our follow-up call.\n\nBest regards</textarea><p><button onclick="alert('Sending requires a genuinely connected Gmail provider and your confirmation.')">Send via Gmail</button> <button class="g">Save draft</button></p></div>`},
+integrations(){const s=t();return`<h2>Integrations</h2><div class="mut">Connections below belong to <b>${esc(s.name)}</b> only.</div><div class="grid" style="margin:10px 0">${INTS.map(i=>{const c=s.conn[i[0]];return`<div class="card"><div style="font-size:24px">${i[2]}</div><b>${i[0]}</b><div class="mut">${i[1]}</div><p><span class="tag ${c?"ok":"no"}">${c?"Connected (simulated)":"Not Connected"}</span></p><div class="mut">Last sync: ${c?c:"never"}</div><p>${c?`<button class="g" onclick="delete t().conn['${i[0]}'];render()">Disconnect</button>`:`<button onclick="t().conn['${i[0]}']=new Date().toLocaleTimeString();render()">Connect (demo)</button>`}</p><div class="mut">Real OAuth: Fastn connector, tokens held server-side.</div></div>`}).join("")}</div>
+<div class="card"><b>Fastn connector widget</b> <span class="tag">Real when token set</span><div class="mut">Paste the embed token minted server-side for this tenant (Fastn createTenant → embed token). Never hardcode it.</div><p><input id="tok" placeholder="EMBED_TOKEN for ${esc(s.name)}" value="${esc(s.token)}"><br><br><button onclick="t().token=document.getElementById('tok').value.trim();render()">Load widget</button></p>
+${s.token?`<iframe src="https://api.fastn.dev/v1/embed/iframe?token=${encodeURIComponent(s.token)}" style="width:100%;height:600px;border:none" allow="clipboard-write" referrerpolicy="strict-origin-when-cross-origin"></iframe>`:'<div class="mut">No token yet, widget not loaded.</div>'}</div>`},
+tenants(){const ks=Object.keys(T),r=window.run;return`<h2>Two-Tenant Test</h2><div class="card"><p>Same note, same workflow, run for both tenants. Each tenant uses its own account and its own data scope.</p><button onclick="runBoth()">Run workflow for both tenants</button></div>
+<div class="two" style="margin-top:12px">${ks.map(k=>{const s=T[k];return`<div class="card"><b>${esc(s.name)}</b><div class="mut">Account: ${esc(s.acct)}<br>Connectors: ${Object.keys(s.conn).join(", ")||"none"}</div><p>Contacts: ${s.contacts.map(c=>esc(c.n)).join(", ")}<br>Deals: ${s.deals.map(d=>esc(d.t)).join(", ")}<br>Tasks: ${s.tasks.length}</p></div>`}).join("")}</div>
+${r?`<div class="card" style="margin-top:12px"><b>Isolation checks</b>${r.map(x=>`<div>${x[1]?'<span class="tag ok">PASS</span>':'<span class="tag no">FAIL</span>'} ${x[0]}</div>`).join("")}<div class="mut" style="margin-top:8px">Simulated in-browser. In production isolation is enforced by Supabase RLS on tenant_id and by per-tenant Fastn tenants/connections.</div></div>`:""}`}};
+function proc(){draft=extract(document.getElementById("note").value);render()}
+function review(){const d=draft;return`<hr><b>Review before saving</b> <span class="tag">confidence ${Math.round(d.conf*100)}%</span><div class="mut">Stated facts only; unknown values stay null.</div><table>${["name","company","email","phone","value","deadline","followup"].map(k=>`<tr><td>${k}</td><td>${d[k]===null?'<i class="mut">null</i>':esc(d[k])}</td></tr>`).join("")}</table><p><button onclick="save(cur,draft);draft=null;go('contacts')">Approve & save to ${esc(t().name)}</button></p>`}
+function runBoth(){
+ for(const k in T){T[k].contacts=T[k].contacts.slice(0,1);T[k].deals=T[k].deals.slice(0,1);T[k].tasks=[]}
+ T.A.conn={"Gmail":new Date().toLocaleTimeString()};T.B.conn={"Slack":new Date().toLocaleTimeString()};
+ save("A",extract(SAMPLE));save("B",extract(SAMPLE.replace("Ahmed from ABC Properties","Lina from Nova Labs")));
+ const A=T.A.contacts.map(c=>c.n),B=T.B.contacts.map(c=>c.n);
+ window.run=[["Tenant A contains Ahmed and not Lina",A.includes("Ahmed")&&!A.includes("Lina")],["Tenant B contains Lina and not Ahmed",B.includes("Lina")&&!B.includes("Ahmed")],["Seed contacts did not cross tenants",!A.includes("Omar Ali")&&!B.includes("Sara Khan")],["Connected accounts differ",T.A.acct!==T.B.acct],["Connector sets differ (A: Gmail, B: Slack)",Object.keys(T.A.conn)[0]!==Object.keys(T.B.conn)[0]]];
+ render()}
+function render(){document.getElementById("nav").innerHTML='<h1>Ghost<span>Writer</span></h1>'+NAV.map(n=>`<a class="${n[0]==view?"on":""}" onclick="go('${n[0]}')">${n[1]}</a>`).join("");
+ const ts=document.getElementById("tsel");ts.innerHTML=Object.keys(T).map(k=>`<option value="${k}" ${k==cur?"selected":""}>${T[k].name}</option>`).join("");ts.onchange=()=>{cur=ts.value;render()};
+ document.getElementById("q").oninput=()=>{if(view=="contacts")render()};
+ document.getElementById("v").innerHTML=views[view]()}
+render();
+</script></body></html>

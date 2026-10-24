@@ -1,0 +1,1 @@
+Demo mode: AI extraction and connectors are simulated unless marked “Real”. Nothing is sent externally.
