@@ -1,18 +1,35 @@
 # Ghostwriter-CRM
 
-Key Features
+# React + TypeScript + Vite
 
-Voice-to-CRM: Turn spoken meeting notes into structured customer records.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-AI-Powered Extraction: Identify client requirements, budgets, preferences, and next steps.
+Currently, two official plugins are available:
 
-Smart Sales Pipeline: Organize leads and track their progress through a visual Kanban board.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-Automated Follow-Ups: Prepare timely reminders and follow-up actions.
+## React Compiler
 
-Connected Business Tools: Connect supported applications such as Gmail, Google Calendar, Slack, Google Drive, and HubSpot through Fastn.
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-Customer-Specific Integrations: Allow each business to connect its own accounts.
+## Expanding the Oxlint configuration
 
-Centralized Dashboard: Manage leads, meeting notes, tasks, and sales activities in one place.
+If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+
+```json
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["react", "typescript", "oxc"],
+  "options": {
+    "typeAware": true
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": ["warn", { "allowConstantExport": true }]
+  }
+}
+```
+
+See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
 
