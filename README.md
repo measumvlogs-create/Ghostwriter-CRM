@@ -1,5 +1,23 @@
 # Ghostwriter-CRM
+# 0. One-time setup
+npm i -g supabase
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
 
+# 1. Create the tables and security policies
+supabase db push
+
+# 2. Fill in .env first (copy .env.example to .env), then upload the secrets
+cp .env.example .env
+supabase secrets set --env-file .env
+
+# 3. Deploy the three functions
+supabase functions deploy extract-meeting
+supabase functions deploy fastn-embed-token
+supabase functions deploy run-workflow
+
+# 4. Run the demo UI locally
+cd frontend && npm run dev
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
